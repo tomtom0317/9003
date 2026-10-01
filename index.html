@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>3のべきじょう レスキュー</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:rgba(0,0,0,0)}
+html,body{margin:0;padding:0;background:#eef7ff;color:#24364a;font-family:Arial,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif}
+.wrap{max-width:620px;margin:auto;padding:10px}
+.panel{background:#fff;border:2px solid #b9d7ee;border-radius:20px;padding:12px;box-shadow:0 5px 18px rgba(0,0,0,.08)}
+h1{text-align:center;font-size:27px;margin:2px 0 6px}
+.sub{text-align:center;font-size:15px;line-height:1.55;font-weight:bold}
+.info{display:table;width:100%;table-layout:fixed;border-spacing:6px;margin-top:8px}
+.box{display:table-cell;background:#edf6fd;border-radius:11px;padding:8px;text-align:center;font-weight:bold;font-size:12px}
+.num{font-size:20px;color:#2b6fa8}
+.mission{background:#fff7d6;border-radius:14px;padding:10px;text-align:center;font-size:18px;font-weight:bold;line-height:1.55;margin-top:8px}
+.board{background:#9bb4c8;border-radius:15px;padding:7px;margin-top:10px;touch-action:none;-ms-touch-action:none}
+.row{display:table;width:100%;table-layout:fixed;border-spacing:7px}
+.cell{display:table-cell;height:96px;background:#c7d7e4;border-radius:10px;text-align:center;vertical-align:middle;font-weight:bold;position:relative;overflow:hidden}
+.tile{display:block;width:100%;height:100%;line-height:92px;border-radius:8px;font-size:28px;color:#fff}
+.wall{background:#526678;color:#dbe7ef;font-size:30px;line-height:92px}
+.person{position:absolute;right:3px;bottom:3px;font-size:25px;line-height:1}
+.door{position:absolute;left:3px;top:3px;font-size:24px;line-height:1}
+.msg{min-height:64px;margin-top:9px;background:#f6fbff;border:2px solid #d7eaf7;border-radius:13px;padding:9px;text-align:center;font-size:16px;font-weight:bold;line-height:1.5}
+.help{margin-top:8px;background:#edf6fd;border-radius:12px;padding:9px;text-align:center;line-height:1.55;font-size:14px;font-weight:bold}
+.actions{display:table;width:100%;table-layout:fixed;border-spacing:6px;margin-top:7px}
+.acell{display:table-cell}
+button{width:100%;border:0;border-radius:11px;padding:10px 5px;background:#67839a;color:#fff;font-size:14px;font-weight:bold}
+#bgm.on{background:#4b8a63}
+.map{display:table;width:100%;table-layout:fixed;border-spacing:4px;margin-top:9px}
+.mcell{display:table-cell;height:32px;border-radius:7px;background:#d8e7f2;text-align:center;vertical-align:middle;font-size:12px;font-weight:bold}
+.mcell.done{background:#ffe270}.mcell.now{background:#75c4ff}.mcell.boss{background:#8459b5;color:#fff}
+.overlay{display:none;position:fixed;left:0;top:0;right:0;bottom:0;background:rgba(235,247,255,.96);z-index:100}
+.obox{position:absolute;left:7%;top:17%;width:86%;max-width:430px;background:#fff;border:2px solid #bdd7e9;border-radius:20px;padding:20px;text-align:center}
+.big{font-size:76px}.obox h2{font-size:28px;margin:5px}.obox p{font-size:18px;line-height:1.6;font-weight:bold}
+.primary{width:100%;border:0;border-radius:13px;padding:13px;background:#2f7fb9;color:#fff;font-size:18px;font-weight:bold;margin-top:7px}
+#fx{position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;z-index:90}.spark{position:absolute;width:8px;height:12px}
+@media(max-width:420px){
+ .cell{height:76px}.tile,.wall{line-height:72px}.tile{font-size:23px}.wrap{padding:6px}h1{font-size:23px}
+}
+</style>
+</head>
+<body>
+<div id="fx"></div>
+<div class="wrap"><div class="panel">
+<h1>🛟 3のべきじょう レスキュー</h1>
+<div class="sub">2048みたいに スワイプして、ひつような「3のべきじょう」を つくろう！<br>とびらを ひらいて、なかまを きゅうしゅつ！</div>
+
+<div class="info">
+ <div class="box">ステージ<br><span id="stageNo" class="num">1</span>/10</div>
+ <div class="box">スコア<br><span id="score" class="num">0</span></div>
+ <div class="box">きゅうしゅつ<br><span id="rescued" class="num">0</span></div>
+</div>
+
+<div id="mission" class="mission"></div>
+
+<div id="board" class="board"></div>
+<div id="msg" class="msg">上下左右に スワイプして、おなじ すうじを くっつけよう！</div>
+
+<div class="help">📱 iPad・iPhone：上下左右にスワイプ<br>💻 パソコン：← ↑ ↓ → キー<br>ゴールの数字ができると、とびらが ひらいて きゅうしゅつ成功！</div>
+
+<div class="actions">
+ <div class="acell"><button id="retry">🔄 やりなおす</button></div>
+ <div class="acell"><button id="undo">↩ 1かい もどす</button></div>
+ <div class="acell"><button id="bgm">🎵 BGM OFF</button></div>
+</div>
+
+<div id="map" class="map"></div>
+</div></div>
+
+<div id="clear" class="overlay"><div class="obox"><div class="big">🎉🛟</div><h2>きゅうしゅつ せいこう！</h2><p id="clearText"></p><button id="next" class="primary">つぎの ステージへ</button></div></div>
+<div id="allclear" class="overlay"><div class="obox"><div class="big">🏆✨</div><h2>レスキュー マスター！</h2><p>10ステージ ぜんぶ クリア！<br>3のべきじょうを つかって みんなを たすけたよ！</p><button id="again" class="primary">もういちど</button></div></div>
+<div id="gameover" class="overlay"><div class="obox"><div class="big">😵</div><h2>うごけなくなった！</h2><p>もういちど ちょうせんしよう。</p><button id="goRetry" class="primary">このステージを やりなおす</button></div></div>
+
+<script>
+(function(){
+"use strict";
+var LEVELS=[{"target": 9, "rescues": 1, "blocks": 0, "name": "はじめての きゅうしゅつ"}, {"target": 27, "rescues": 1, "blocks": 0, "name": "27を つくろう"}, {"target": 81, "rescues": 1, "blocks": 1, "name": "じゃまブロック とうじょう"}, {"target": 243, "rescues": 1, "blocks": 1, "name": "243の とびら"}, {"target": 729, "rescues": 1, "blocks": 2, "name": "729を めざせ"}, {"target": 2187, "rescues": 1, "blocks": 2, "name": "むずかしく なってきた"}, {"target": 6561, "rescues": 1, "blocks": 3, "name": "6561の きゅうしゅつ"}, {"target": 19683, "rescues": 1, "blocks": 3, "name": "うちゅう きゅうしゅつ"}, {"target": 59049, "rescues": 1, "blocks": 4, "name": "さいしゅう ステージ"}, {"target": 59049, "rescues": 3, "blocks": 4, "name": "レスキュー マスター"}],N=4,STORAGE="power3_rescue_oldipad_v1";
+var stage=0,board=[],score=0,rescued=0,prev=null,won=false,sx=0,sy=0;
+var audioCtx=null,bgmOn=false,bgmTimer=null,bgmStep=0;
+
+function $(id){return document.getElementById(id)}
+function emptyBoard(){var b=[],r,c,row;for(r=0;r<N;r++){row=[];for(c=0;c<N;c++)row.push(0);b.push(row)}return b}
+function cloneBoard(b){var o=[],r;for(r=0;r<b.length;r++)o.push(b[r].slice(0));return o}
+function same(a,b){var r,c;for(r=0;r<N;r++)for(c=0;c<N;c++)if(a[r][c]!==b[r][c])return false;return true}
+function fmt(n){var s=String(n),o="",i,k=0;for(i=s.length-1;i>=0;i--){o=s.charAt(i)+o;k++;if(k===3&&i!==0){o=","+o;k=0}}return o}
+function exp3(v){var e=0,n=v;while(n>1&&n%3===0){n=n/3;e++}return Math.max(1,e)}
+function color(v){var e=exp3(v),a=["#78b7e8","#5aa6e3","#488fcf","#5576c9","#6a63c0","#8e5ab9","#b259a5","#d25c86","#e26568","#eb7d4a"];return a[Math.min(9,e-1)]}
+
+function addWalls(){
+ var count=LEVELS[stage].blocks,i,r,c;
+ for(i=0;i<count;i++){
+  do{r=Math.floor(Math.random()*N);c=Math.floor(Math.random()*N)}while(board[r][c]!==0);
+  board[r][c]=-1;
+ }
+}
+function addRandom(){
+ var a=[],r,c,p;
+ for(r=0;r<N;r++)for(c=0;c<N;c++)if(board[r][c]===0)a.push([r,c]);
+ if(!a.length)return;
+ p=a[Math.floor(Math.random()*a.length)];board[p[0]][p[1]]=3;
+}
+function highest(){
+ var m=3,r,c;for(r=0;r<N;r++)for(c=0;c<N;c++)if(board[r][c]>m)m=board[r][c];return m;
+}
+function renderMap(){
+ var html="",i,cl;
+ for(i=0;i<LEVELS.length;i++){cl="mcell ";if(i<stage)cl+="done ";if(i===stage)cl+="now ";if(i===9)cl+="boss ";html+='<div class="'+cl+'">'+(i+1)+'</div>'}
+ $("map").innerHTML=html;
+}
+function render(){
+ var html="",r,c,v,fs,target=LEVELS[stage].target;
+ for(r=0;r<N;r++){html+='<div class="row">';for(c=0;c<N;c++){v=board[r][c];
+  if(v===-1){html+='<div class="cell wall">🧱</div>'}
+  else if(v>0){fs=String(v).length>=5?16:(String(v).length>=4?19:28);html+='<div class="cell"><span class="tile" style="background:'+color(v)+';font-size:'+fs+'px">'+fmt(v)+'</span></div>'}
+  else html+='<div class="cell"></div>';
+ }html+='</div>'}
+ $("board").innerHTML=html;
+ $("stageNo").innerHTML=String(stage+1);$("score").innerHTML=fmt(score);$("rescued").innerHTML=String(rescued);
+ $("mission").innerHTML="🚪 このステージの とびら： <b>"+fmt(target)+"</b> を つくろう！";
+ $("bgm").innerHTML=bgmOn?"🎵 BGM ON":"🎵 BGM OFF";$("bgm").className=bgmOn?"on":"";
+ renderMap();
+}
+function compressSegments(line){
+ var out=[],i=0;
+ while(i<N){
+  if(line[i]===-1){out.push(-1);i++;continue}
+  var seg=[];
+  while(i<N&&line[i]!==-1){if(line[i]!==0)seg.push(line[i]);i++}
+  var merged=[],j=0;
+  while(j<seg.length){
+   if(j<seg.length-1&&seg[j]===seg[j+1]){var v=seg[j]*3;merged.push(v);score+=v;j+=2}
+   else{merged.push(seg[j]);j++}
+  }
+  var segLen=0,k=i-1;
+  while(k>=0&&line[k]!==-1){segLen++;k--}
+  while(merged.length<segLen)merged.push(0);
+  for(j=0;j<merged.length;j++)out.push(merged[j]);
+ }
+ while(out.length<N)out.push(0);
+ return out.slice(0,N);
+}
+function transpose(b){var o=emptyBoard(),r,c;for(r=0;r<N;r++)for(c=0;c<N;c++)o[c][r]=b[r][c];return o}
+function reverseRows(b){var o=[],r;for(r=0;r<N;r++)o.push(b[r].slice(0).reverse());return o}
+function move(dir){
+ prev={board:cloneBoard(board),score:score};
+ var work=cloneBoard(board),r;
+ if(dir==="up"||dir==="down")work=transpose(work);
+ if(dir==="right"||dir==="down")work=reverseRows(work);
+ for(r=0;r<N;r++)work[r]=compressSegments(work[r]);
+ if(dir==="right"||dir==="down")work=reverseRows(work);
+ if(dir==="up"||dir==="down")work=transpose(work);
+ if(same(board,work)){prev=null;return}
+ board=work;addRandom();render();
+ if(highest()>=LEVELS[stage].target){rescue();return}
+ if(!canMove()){setTimeout(function(){$("gameover").style.display="block"},250)}
+ saveState();
+}
+function canMove(){
+ var r,c;
+ for(r=0;r<N;r++)for(c=0;c<N;c++){
+  if(board[r][c]===0)return true;
+  if(board[r][c]<=0)continue;
+  if(r+1<N&&board[r+1][c]===board[r][c])return true;
+  if(c+1<N&&board[r][c+1]===board[r][c])return true;
+ }
+ return false;
+}
+function rescue(){
+ rescued++;saveState();fireworks(100);playWin();
+ $("clearText").innerHTML=fmt(LEVELS[stage].target)+" が できた！<br>🚪 とびらが ひらいた！<br>🧒 なかまを きゅうしゅつ！";
+ $("clear").style.display="block";
+}
+function startStage(i){
+ stage=i;board=emptyBoard();score=0;prev=null;won=false;
+ addWalls();addRandom();addRandom();render();$("msg").innerHTML="スワイプして、とびらの すうじを つくろう！";saveState();
+}
+function nextStage(){
+ $("clear").style.display="none";
+ if(stage>=LEVELS.length-1){$("allclear").style.display="block";fireworks(180);return}
+ startStage(stage+1);
+}
+function saveState(){try{localStorage.setItem(STORAGE,JSON.stringify({stage:stage,rescued:rescued}))}catch(e){}}
+function loadState(){try{var s=JSON.parse(localStorage.getItem(STORAGE)||"null");if(s){if(typeof s.stage==="number")stage=s.stage;if(typeof s.rescued==="number")rescued=s.rescued}}catch(e){}}
+
+/* old iPad audio */
+function getAudio(){if(audioCtx)return audioCtx;var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return null;try{audioCtx=new AC()}catch(e){audioCtx=null}return audioCtx}
+function unlockAudio(){var a=getAudio();if(!a)return;try{if(a.state==="suspended"&&a.resume)a.resume();var b=a.createBuffer(1,1,22050),s=a.createBufferSource();s.buffer=b;s.connect(a.destination);s.start(0)}catch(e){}}
+function tone(freq,start,dur,vol,type){var a=getAudio(),o,g;if(!a)return;try{o=a.createOscillator();g=a.createGain();o.type=type||"sine";o.frequency.value=freq;g.gain.setValueAtTime(vol,start);g.gain.exponentialRampToValueAtTime(.0001,start+dur);o.connect(g);g.connect(a.destination);o.start(start);o.stop(start+dur+.02)}catch(e){}}
+function bgmTick(){var a=getAudio(),m=[261.63,329.63,392,523.25,392,329.63,293.66,392,349.23,440,523.25,659.25,523.25,440,392,349.23],b=[130.81,130.81,146.83,146.83,164.81,164.81,146.83,146.83],now;if(!a||!bgmOn)return;now=a.currentTime+.03;tone(m[bgmStep%m.length],now,.22,.025,"sine");if(bgmStep%2===0)tone(b[Math.floor(bgmStep/2)%b.length],now,.38,.012,"triangle");bgmStep++}
+function startBgm(){unlockAudio();bgmOn=true;if(bgmTimer)clearInterval(bgmTimer);bgmStep=0;bgmTick();bgmTimer=setInterval(bgmTick,300);render()}
+function stopBgm(){bgmOn=false;if(bgmTimer){clearInterval(bgmTimer);bgmTimer=null}render()}
+function toggleBgm(){if(bgmOn)stopBgm();else startBgm()}
+function playWin(){var a=getAudio(),N=[523,659,784,1046],i;if(!a)return;for(i=0;i<N.length;i++)tone(N[i],a.currentTime+i*.11,.2,.06,"sine")}
+
+function fireworks(n){
+ var fx=$("fx"),cx=window.innerWidth/2,cy=window.innerHeight*.25,cols=["#f66","#fd4","#5b7","#48e","#a6e"],i,e;
+ for(i=0;i<n;i++){e=document.createElement("div");e.className="spark";e.style.background=cols[i%5];e.style.left=cx+"px";e.style.top=cy+"px";fx.appendChild(e);
+ (function(el,dx,dy,born){var tm=setInterval(function(){var t=((new Date()).getTime()-born)/1000;if(t>=1){clearInterval(tm);if(el.parentNode)el.parentNode.removeChild(el);return}el.style.left=(cx+dx*t)+"px";el.style.top=(cy+dy*t)+"px";el.style.opacity=String(1-t)},30)})(e,Math.random()*650-325,80+Math.random()*430,(new Date()).getTime())}
+}
+
+/* keyboard */
+document.onkeydown=function(e){e=e||window.event;var k=e.keyCode;if(k===37){move("left");return false}if(k===38){move("up");return false}if(k===39){move("right");return false}if(k===40){move("down");return false}}
+
+/* touch */
+$("board").addEventListener("touchstart",function(e){if(!e.touches||!e.touches.length)return;sx=e.touches[0].clientX;sy=e.touches[0].clientY;unlockAudio()},false);
+$("board").addEventListener("touchmove",function(e){if(e.preventDefault)e.preventDefault()},false);
+$("board").addEventListener("touchend",function(e){var t,dx,dy;if(!e.changedTouches||!e.changedTouches.length)return;t=e.changedTouches[0];dx=t.clientX-sx;dy=t.clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))<25)return;if(Math.abs(dx)>Math.abs(dy))move(dx>0?"right":"left");else move(dy>0?"down":"up")},false);
+
+/* mouse */
+$("board").onmousedown=function(e){sx=e.clientX;sy=e.clientY};
+$("board").onmouseup=function(e){var dx=e.clientX-sx,dy=e.clientY-sy;if(Math.max(Math.abs(dx),Math.abs(dy))<25)return;if(Math.abs(dx)>Math.abs(dy))move(dx>0?"right":"left");else move(dy>0?"down":"up")};
+
+$("retry").onclick=function(){unlockAudio();startStage(stage)};
+$("undo").onclick=function(){unlockAudio();if(prev){board=cloneBoard(prev.board);score=prev.score;prev=null;render()}};
+$("bgm").onclick=function(){unlockAudio();toggleBgm()};
+$("next").onclick=nextStage;
+$("goRetry").onclick=function(){$("gameover").style.display="none";startStage(stage)};
+$("again").onclick=function(){rescued=0;stage=0;$("allclear").style.display="none";startStage(0)};
+
+loadState();startStage(stage);
+})();
+</script>
+</body>
+</html>
